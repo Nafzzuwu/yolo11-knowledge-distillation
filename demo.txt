@@ -1,0 +1,82 @@
+RINGKASAN DEMO KODE KNOWLEDGE DISTILLATION (kd_yolo.py)
+========================================================
+
+1. APA YANG DIJALANKAN DI TERMINAL DAN KENAPA
+--------------------------------------------------------
+Perintah 1  : python kd_yolo.py teacher  --data coco8.yaml --epochs 1 --device cpu --batch 4
+  Fungsi    : melatih model BESAR (YOLO11l) sebagai "guru".
+  Alasan    : guru dibutuhkan untuk mengajari model kecil.
+
+Perintah 2  : python kd_yolo.py baseline --data coco8.yaml --epochs 1 --device cpu --batch 4
+  Fungsi    : melatih model KECIL (YOLO11n) TANPA guru.
+  Alasan    : jadi pembanding.
+
+Perintah 3  : python kd_yolo.py distill  --data coco8.yaml --epochs 1 --device cpu --batch 4 --teacher "runs\detect\runs_kd\teacher\weights\best.pt"
+  Fungsi    : melatih model KECIL (YOLO11n) DENGAN bantuan guru.
+  Alasan    : ini inti knowledge distillation.
+
+Perintah 4  : python kd_yolo.py compare  --data coco8.yaml --device cpu --weights "runs\detect\runs_kd\teacher\weights\best.pt" "runs\detect\runs_kd\student_baseline\weights\best.pt" "runs\detect\runs_kd\student_kd\weights\best.pt"
+  Fungsi    : menguji ketiga model dan mencetak tabel perbandingan.
+  Alasan    : untuk membandingkan akurasi, ukuran, dan kecepatan.
+
+Dataset coco8 hanya 8 gambar objek umum. Tujuannya mengecek kode jalan,
+BUKAN membuktikan hasil penyakit daun.
+
+
+2. BUKTI KODE BERJALAN (YANG DITUNJUKKAN DI TERMINAL)
+--------------------------------------------------------
+Bukti A - saat perintah 3 (distill), di awal log harus ada 2 baris ini:
+   [KD] Teacher dimuat dari runs\detect\runs_kd\teacher\weights\best.pt ...
+   [KD] aktif - nilai loss distillation (batch pertama): <angka> | rentang skor teacher: ...
+
+   Penjelasan: baris pertama = model guru berhasil dimuat. Baris kedua =
+   loss distillation benar-benar dihitung dan dipakai melatih model kecil.
+   (Angka kedua bisa sedikit berbeda tiap run, itu normal.)
+
+Bukti B - di akhir tiap training muncul baris:
+   [OK] Bobot terbaik <nama>: ...\best.pt
+   Penjelasan: model berhasil dilatih dan tersimpan.
+
+Bukti C - tabel dari perintah 4 (compare), berisi mAP50, mAP50-95, Param(M),
+   ms/img untuk tiga model.
+
+PENTING: jalankan ulang perintah 4 SETELAH perintah 3 versi terbaru
+(yang ada baris "[KD] aktif"), supaya angka student_kd benar.
+
+
+3. TABEL PERBANDINGAN DAN CARA MENJELASKANNYA
+--------------------------------------------------------
+Hasil tes sebelumnya (isi baris student_kd dengan hasil compare terbaru):
+
+ Model             | mAP50 | mAP50-95 | Param (juta) | Waktu/gambar (CPU)
+ ------------------|-------|----------|--------------|-------------------
+ teacher (11l)     | 96,2  | 74,0     | 25,37        | 467,4 ms
+ student_baseline  | 94,4  | 65,4     | 2,62         | 58,8 ms
+ student_kd        | ....  | ....     | 2,62         | ....
+
+Cara menjelaskan:
+ a) UKURAN: model kecil sekitar 9,7 kali lebih kecil dari guru
+    (2,62 juta vs 25,37 juta parameter).
+ b) KECEPATAN: model kecil sekitar 8 kali lebih cepat di CPU
+    (sekitar 55-59 ms vs 467 ms per gambar).
+ c) AKURASI: guru paling tinggi, itu wajar karena ukurannya besar.
+    Yang ingin dilihat adalah apakah student_kd lebih dekat ke guru
+    dibanding student_baseline.
+ d) student_baseline dan student_kd punya arsitektur sama, jadi ukuran
+    dan kecepatannya sama. Yang membedakan hanya cara pelatihannya.
+
+Kalimat aman untuk hasil akurasi:
+ "Pada tes ini dataset hanya coco8 dengan 1 epoch, sehingga perbedaan akurasi
+  antara baseline dan KD belum bisa disimpulkan. Tes ini membuktikan alur
+  kode berjalan dan distillation aktif. Pembuktian akurasi dilakukan pada
+  tahap berikutnya dengan dataset penyakit daun dan training lebih lama."
+
+JANGAN mengatakan: "KD terbukti meningkatkan akurasi".
+   Alasannya: hanya 4 gambar validasi dan 1 epoch, selisih kecil bisa kebetulan.
+
+
+4. KALIMAT PENUTUP
+--------------------------------------------------------
+ "Ini kode awal knowledge distillation, sekitar 30-35% dari topik penuh.
+  Sudah berjalan dan terverifikasi aktif. Evaluasi pada dataset penyakit
+  daun, attention, dan pengujian di perangkat edge menjadi tahap berikutnya."

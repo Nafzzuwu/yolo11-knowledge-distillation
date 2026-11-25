@@ -1,0 +1,31 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# Secrets / local configuration
+.env
+.env.*
+!.env.example
+
+# Local datasets, annotations, and generated caches
+/data/
+/datasets/
+*.cache
+
+# Training outputs and checkpoints
+/runs/
+/runs_*/
+*.pt
+*.pth
+*.onnx
+*.engine
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
